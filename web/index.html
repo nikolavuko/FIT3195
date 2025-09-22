@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -10,9 +10,12 @@
     <div class="container">
       <header>
         <h1>Talking Companion</h1>
+        <nav aria-label="Primary">
+          <a class="nav-link" href="/user-data.html">User Data</a>
+        </nav>
       </header>
 
-      <main>
+      <main class="chat-layout">
         <div class="avatar" id="avatar" aria-hidden="true"></div>
 
         <div class="chat" id="chat"></div>
@@ -23,7 +26,7 @@
         </form>
 
         <div class="controls">
-          <button id="micBtn" aria-pressed="false">🎤 Start Listening</button>
+          <button id="micBtn" aria-pressed="false">Start Listening</button>
           <span id="status" class="status">Idle</span>
         </div>
       </main>
@@ -31,5 +34,4 @@
 
     <script src="/script.js"></script>
   </body>
-  </html>
-
+</html>

@@ -1,0 +1,7 @@
+﻿.venv/
+__pycache__/
+.env
+
+# OS junk
+.DS_Store
+Thumbs.db
