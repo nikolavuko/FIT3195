@@ -12,6 +12,8 @@ const messages = [
   { role: 'system', content: 'You are Dachikou, a warm, patient elderly companion.' }
 ];
 
+let currentAudio = null;
+
 function addBubble(role, text) {
   const div = document.createElement('div');
   div.className = `bubble ${role}`;
@@ -25,11 +27,51 @@ function setTalking(on) {
 }
 
 function speak(text) {
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
+  }
   if (!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
   const utter = new SpeechSynthesisUtterance(text);
   utter.onstart = () => setTalking(true);
   utter.onend = () => setTalking(false);
   speechSynthesis.speak(utter);
+}
+
+function playElevenAudio(audioBase64, textFallback) {
+  if (!audioBase64) return false;
+
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
+  }
+
+  const src = `data:audio/mpeg;base64,${audioBase64}`;
+  const audio = new Audio(src);
+
+  audio.onplay = () => setTalking(true);
+  audio.onended = () => {
+    setTalking(false);
+    currentAudio = null;
+  };
+  audio.onerror = () => {
+    setTalking(false);
+    currentAudio = null;
+    if (textFallback) speak(textFallback);
+  };
+
+  currentAudio = audio;
+  const playPromise = audio.play();
+  if (playPromise && typeof playPromise.catch === 'function') {
+    playPromise.catch(() => {
+      setTalking(false);
+      currentAudio = null;
+      if (textFallback) speak(textFallback);
+    });
+  }
+
+  return true;
 }
 
 async function callBackend() {
@@ -40,7 +82,7 @@ async function callBackend() {
   });
   if (!res.ok) throw new Error(await res.text());
   const data = await res.json();
-  return data.reply;
+  return data;
 }
 
 async function handleUserMessage(text) {
@@ -55,10 +97,13 @@ async function handleUserMessage(text) {
   statusEl.textContent = 'Thinking...';
 
   try {
-    const reply = await callBackend();
+    const { reply, audio_base64 } = await callBackend();
     messages.push({ role: 'assistant', content: reply });
     addBubble('assistant', reply);
-    speak(reply);
+
+    if (!playElevenAudio(audio_base64, reply)) {
+      speak(reply);
+    }
   } catch (e) {
     console.error(e);
     addBubble('assistant', 'Sorry, I ran into an error.');
